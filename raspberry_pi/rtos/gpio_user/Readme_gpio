@@ -1,0 +1,32 @@
+cat /sys/kernel/debug/gpio 
+GPIOs 0-53, parent: platform/3f200000.gpio, pinctrl-bcm2835:
+drivers/pinctrl/bcm/pinctrl-bcm2835.c
+
+root@raspberrypi:/sys/kernel/debug# cat gpio
+gpiochip0: GPIOs 0-53, parent: platform/3f200000.gpio, pinctrl-bcm2835:
+ gpio-29  (                    |led0                ) out lo
+
+gpiochip1: GPIOs 504-511, parent: platform/soc:firmware:expgpio, raspberrypi-exp-gpio, can sleep:
+ gpio-506 (                    |led1                ) out lo ACTIVE LOW
+
+
+https://www.ics.com/blog/gpio-programming-exploring-libgpiod-library
+sudo apt-get install gpiod
+
+pi@raspberrypi:~ $ gpiodetect
+gpiochip0 [pinctrl-bcm2835] (54 lines)
+gpiochip1 [raspberrypi-exp-gpio] (8 lines)
+
+pi@raspberrypi:~/gpio $ ls -l /dev/gpiochip0 
+crw-rw---- 1 root gpio 254, 0 Feb  9 09:03 /dev/gpiochip0
+
+
+#define GPSET0      0x1c    /* Pin Output Set */
+#define GPCLR0      0x28    /* Pin Output Clear */
+
+[   79.356270] SET 1c:1d	< :29
+[   79.356357] SET 28:1d 	< :29
+
+0x 7E20 001C GPSET0 GPIO Pin Output Set 0 32 W
+0x 7E20 0020 GPSET1 GPIO Pin Output Set 1 32 W
+

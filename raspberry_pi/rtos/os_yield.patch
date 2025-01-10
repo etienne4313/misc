@@ -1,0 +1,123 @@
+diff --git a/kernel/os_core.c b/kernel/os_core.c
+index 1524f7f..819ef01 100644
+--- a/kernel/os_core.c
++++ b/kernel/os_core.c
+@@ -86,11 +86,6 @@ static  void  OS_InitTCBList(void);
+ 
+ static  void  OS_SchedNew(void);
+ 
+-#if OS_EXTEND_EN > 0u
+-static void  OS_SchedNext (void);
+-static void  OS_Sched_internal (int flag);
+-#endif
+-
+ 
+ /*
+ *********************************************************************************************************
+@@ -948,6 +943,9 @@ void  OSTimeTick (void)
+ #if OS_CRITICAL_METHOD == 3u                               /* Allocate storage for CPU status register     */
+     OS_CPU_SR  cpu_sr = 0u;
+ #endif
++
++
++
+ #if OS_TIME_TICK_HOOK_EN > 0u
+     OSTimeTickHook();                                      /* Call user definable hook                     */
+ #endif
+@@ -1701,11 +1699,7 @@ void  OS_MemCopy (INT8U  *pdest,
+ *********************************************************************************************************
+ */
+ 
+-#if OS_EXTEND_EN > 0u
+-static void  OS_Sched_internal (int flag)
+-#else
+ void  OS_Sched (void)
+-#endif
+ {
+ #if OS_CRITICAL_METHOD == 3u                           /* Allocate storage for CPU status register     */
+     OS_CPU_SR  cpu_sr = 0u;
+@@ -1716,17 +1710,8 @@ void  OS_Sched (void)
+     OS_ENTER_CRITICAL();
+     if (OSIntNesting == 0u) {                          /* Schedule only if all ISRs done and ...       */
+         if (OSLockNesting == 0u) {                     /* ... scheduler is not locked                  */
+-#if OS_EXTEND_EN > 0u
+-            if(!flag)
+-                OS_SchedNew();
+-            else
+-                OS_SchedNext();
+-            OSTCBHighRdy = OSTCBPrioTbl[OSPrioHighRdy];
+-            DEBUG("%d -> %d\n", OSPrioCur, OSPrioHighRdy);
+-#else
+             OS_SchedNew();
+             OSTCBHighRdy = OSTCBPrioTbl[OSPrioHighRdy];
+-#endif
+             if (OSPrioHighRdy != OSPrioCur) {          /* No Ctx Sw if current task is highest rdy     */
+ #if OS_TASK_PROFILE_EN > 0u
+                 OSTCBHighRdy->OSTCBCtxSwCtr++;         /* Inc. # of context switches to this task      */
+@@ -1750,52 +1735,6 @@ void  OS_Sched (void)
+ #endif
+ }
+ 
+-#if OS_EXTEND_EN > 0u
+-/*
+-*********************************************************************************************************
+-*                           FIND THE NEXT HIGHEST PRIORITY TASK READY TO RUN
+-*/
+-
+-static void  OS_SchedNext (void)
+-{
+-#if OS_LOWEST_PRIO <= 63u                        /* See if we support up to 64 tasks                   */
+-	INT8U   y;
+-
+-	/* Check in the current group is there is something next ready */
+-	y             = OSUnMapTbl[OSRdyGrp];
+-	OSPrioHighRdy = (INT8U)((y << 3u) + OSUnMapTbl[OSRdyTbl[y] & ((OS_PRIO)~OSTCBCur->OSTCBBitX)]);
+-	if(OSPrioHighRdy != 0)
+-		return;
+-
+-	/* If not then pick the next group */
+-	y             = OSUnMapTbl[OSRdyGrp & ((OS_PRIO)~OSTCBCur->OSTCBBitY) ];
+-	OSPrioHighRdy = (INT8U)((y << 3u) + OSUnMapTbl[OSRdyTbl[y]]);
+-	if(OSPrioHighRdy != 0)
+-		return;
+-
+-	/* Do nothing */
+-	OSPrioHighRdy = OSPrioCur;
+-#else                                            /* We support up to 256 tasks                         */
+-	__BROKEN__
+-#endif
+-}
+-
+-void  OS_Sched (void)
+-{
+-	/* Default behavior */
+-    OS_Sched_internal(0);
+-}
+-
+-void  OS_Yield (void)
+-{
+-	/* 
+-	 * Current task is yielding the CPU so we need to find the next task
+-	 * ready to run ==> OS_SchedNext
+-	 */
+-	OS_Sched_internal(1);
+-}
+-
+-#endif /* OS_EXTEND_EN */
+ 
+ /*
+ *********************************************************************************************************
+diff --git a/kernel/ucos_ii.h b/kernel/ucos_ii.h
+index 9027dec..0a997a5 100644
+--- a/kernel/ucos_ii.h
++++ b/kernel/ucos_ii.h
+@@ -1471,9 +1471,6 @@ void          OSCtxSw                 (void);
+ 
+ #if OS_EXTEND_EN > 0u
+ void OSTickMonotonicTime(void);
+-void OS_Yield (void);
+-#else
+-static inline void OS_Yield(void){};
+ #endif
+ 
+ 

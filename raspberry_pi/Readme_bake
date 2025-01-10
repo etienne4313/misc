@@ -1,0 +1,14 @@
+#export RPI_MODEL=3
+#export DEBIAN_RELEASE=bullseye
+#wget https://raspi.debian.net/daily/raspi_${RPI_MODEL}_${DEBIAN_RELEASE}.img.xz
+#wget https://raspi.debian.net/daily/raspi_${RPI_MODEL}_${DEBIAN_RELEASE}.img.xz.sha256
+#sha256sum -c raspi_${RPI_MODEL}_${DEBIAN_RELEASE}.img.xz.sha256
+#
+# https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2021-01-12/
+# https://www.raspberrypi.com/software/operating-systems/#raspberry-pi-os-legacy
+
+# fdisk the sd card fisrt
+# Create primary partition
+xzcat ~/Downloads/2024-11-19-raspios-bookworm-armhf-lite.img.xz | sudo dd of=/dev/sdb bs=64k oflag=dsync status=progress
+
+

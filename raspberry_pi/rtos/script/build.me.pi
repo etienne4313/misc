@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# 
+# 32 bit
+# sudo apt install crossbuild-essential-armhf
+# git clone --depth=1 https://github.com/raspberrypi/linux linux_pi
+#
+# Raspberry Pi 3:
+# make KERNEL=kernel7 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2709_defconfig
+#
+# Raspberry Pi 3 model b <<
+# make KERNEL=kernel7 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2835_defconfig
+#
+# KERNEL=kernel7 >>><<<
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2709_defconfig
+#
+# Raspberry Pi 4:
+# make KERNEL=kernel7l ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2711_defconfig
+#
+# cp .config CONFIG
+#
+
+INSTALL_PATH=/tmp/bin/
+
+KERNEL=kernel7
+make -j8 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- zImage modules dtbs
+
+make -j8 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules_install INSTALL_MOD_PATH=$INSTALL_PATH
+make -j8 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- dtbs_install INSTALL_DTBS_PATH=$INSTALL_PATH/boot
+make -j8 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- install INSTALL_PATH=$INSTALL_PATH/boot
+cp arch/arm/boot/zImage $INSTALL_PATH/boot/$KERNEL.img
+

@@ -1,0 +1,8 @@
+#!/bin/sh
+INSTALL_PATH=/tmp/bin
+
+make -j8 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- zImage LOCALVERSION=""
+cp arch/arm/boot/zImage $INSTALL_PATH/boot/kernel7l.img
+cp arch/arm/boot/zImage $INSTALL_PATH/boot/kernel7.img
+cp arch/arm/boot/zImage $INSTALL_PATH/boot/kernel.img
+

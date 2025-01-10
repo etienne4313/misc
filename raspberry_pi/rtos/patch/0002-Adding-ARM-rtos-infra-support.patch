@@ -1,0 +1,93 @@
+From 24d86ca8c08cb0f083cb9b6335108b18732567a5 Mon Sep 17 00:00:00 2001
+From: etmartin <etmartin@cisco.com>
+Date: Thu, 2 Jun 2022 11:15:16 -0400
+Subject: [PATCH 2/4] Adding ARM rtos infra support
+
+---
+ arch/arm/mach-bcm/platsmp.c | 69 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 69 insertions(+)
+
+diff --git a/arch/arm/mach-bcm/platsmp.c b/arch/arm/mach-bcm/platsmp.c
+index 47f8053d0240..97f9da0c687b 100644
+--- a/arch/arm/mach-bcm/platsmp.c
++++ b/arch/arm/mach-bcm/platsmp.c
+@@ -331,7 +331,76 @@ static const struct smp_operations nsp_smp_ops __initconst = {
+ };
+ CPU_METHOD_OF_DECLARE(bcm_smp_nsp, "brcm,bcm-nsp-smp", &nsp_smp_ops);
+ 
++#ifndef CONFIG_RTOS_ARM
++#define CONFIG_RTOS_ARM
++#endif
++
++#ifndef CONFIG_RTOS_ARM
+ const struct smp_operations bcm2836_smp_ops __initconst = {
+ 	.smp_boot_secondary	= bcm2836_boot_secondary,
+ };
+ CPU_METHOD_OF_DECLARE(bcm_smp_bcm2836, "brcm,bcm2836-smp", &bcm2836_smp_ops);
++#endif
++
++#ifdef CONFIG_RTOS_ARM
++volatile int rtos_enabled = -1;
++EXPORT_SYMBOL(rtos_enabled);
++
++void (*rtos_entry)(void) = NULL;
++EXPORT_SYMBOL(rtos_entry);
++
++void rtos_start_secondary(void)
++{
++	printk("CPU RTOS no die\n");
++	secondary_start_kernel();
++}
++EXPORT_SYMBOL(rtos_start_secondary);
++
++static void dummy_cpu_die(unsigned int cpu)
++{
++	if(rtos_entry)
++		rtos_entry(); /* Never return */
++
++	/* In the scenario where RTOS is not present lets fake CPU HP */
++	rtos_enabled = 0;
++	printk("Fake RTOS enter\n");
++	while(1){
++		if(rtos_enabled){
++			printk("Fake RTOS exit %d\n", smp_processor_id());
++			secondary_start_kernel();
++		}
++	}
++}
++
++static int dummy_cpu_kill(unsigned cpu)
++{
++	return 1;
++}
++
++static int dummy_boot_secondary(unsigned int cpu, struct task_struct *idle)
++{
++	if(rtos_enabled < 0)
++		return bcm2836_boot_secondary(cpu, idle);
++	printk("RTOS CPU online signaling \n");
++	rtos_enabled = 1;
++	return 0;
++}
++
++static void dummy_secondary_init(unsigned int cpu)
++{
++}
++
++static void __init dummy_prepare_cpus(unsigned int max_cpus)
++{
++}
++
++const struct smp_operations bcm2836_smp_ops __initconst = {
++	.smp_prepare_cpus   = dummy_prepare_cpus,
++	.smp_secondary_init = dummy_secondary_init,
++	.smp_boot_secondary	= dummy_boot_secondary,
++	.cpu_kill       = dummy_cpu_kill,
++	.cpu_die        = dummy_cpu_die,
++};
++CPU_METHOD_OF_DECLARE(bcm_smp_bcm2836, "brcm,bcm2836-smp", &bcm2836_smp_ops);
++#endif
++
+-- 
+2.34.1
+

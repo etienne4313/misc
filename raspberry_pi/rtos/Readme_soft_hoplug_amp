@@ -1,0 +1,93 @@
+ARM CPU:
+
+Unlike X86, ARM doesn't have the IPI mechanism to bootstrap the CPU at a specific addr
+
+CONTEXT CPUx
+~~~~~~~~~~~~
+	sysfs offline >>> CPUn
+		takedown_cpu(){
+		err = stop_machine_cpuslocked(take_cpu_down, NULL, cpumask_of(cpu));  
+			take_cpu_down /* Take this CPU down. */
+				err = __cpu_disable(); /* Ensure this CPU doesn't handle any more interrupts. */
+				tick_handover_do_timer(); /* Give up timekeeping duties */
+				tick_offline_cpu(cpu); /* Park the stopper thread */       <<<< This will trigger the context CPU IDLE check
+				stop_machine_park  /* Park the stopper thread */
+
+			wait_for_ap_thread(st, false);  <<< #1 WAIT here
+
+			__cpu_die(cpu); /* This actually kills the CPU. */
+				cpu_wait_death(cpu, 5))  <<< #2 WAIT here
+
+					platform_cpu_kill(cpu)
+						smp_ops.cpu_kill   <<< NOT define for BCM PI 
+		}
+
+CONTEXT CPUn
+~~~~~~~~~~~~
+	take_cpu_down
+		__cpu_disable
+			lapic_offline
+			apic_soft_disable
+		irq_migrate_all_off_this_cpu
+	static void do_idle(void)
+		if (cpu_is_offline(cpu)) {
+			cpuhp_report_idle_dead(); /* Signal that IDLE pickup the offline */
+									==> cpuhp_complete_idle_dead // complete_ap_thread <<< #1 SIGNAL here
+
+			arch_cpu_idle_dead(){
+				cpu_report_death ==> cpu_report_death <<< #2 SIGNAL HERE
+
+				>>> HIGHJACK HERE
+				if (smp_ops.cpu_die)
+					smp_ops.cpu_die(cpu);
+			}
+
+CONTEXT CPUx
+~~~~~~~~~~~~
+	sysfs online >>> CPUn
+		int bringup_cpu(unsigned int cpu)
+			ret = __cpu_up(cpu, idle);
+				struct smp_ops smp_ops = {
+					.cpu_up         = native_cpu_up,
+
+				native_cpu_up
+					err = do_boot_cpu(apicid, cpu, tidle, &cpu0_nmi_registered)
+
+						unsigned long start_ip = real_mode_header->trampoline_start;
+							ENTRY(trampoline_start) in arch/x86/realmode/rm/trampoline_64.S
+							The trampoline code will 'jmpq    *tr_start(%rip)' which is set to secondary_startup_64() in arch/x86/kernel/head_64.S
+							secondary_startup_64() will branch into 'initial_code' using 'movq    initial_code(%rip),%rax'
+
+						initial_code = (unsigned long)start_secondary;
+						
+						>>> HIGHJACK HERE
+						printk("RTOS CPU online signaling \n");
+						rtos_enabled = 1; // RELEASE the RTOS CPU; The RTOS idle loop pick this condition and do rtos_start_secondary()
+						boot_error = 0;
+
+						/* INIT IPI */
+				//		boot_error = apic->wakeup_secondary_cpu(apicid, start_ip);
+						
+						/* * Wait 10s total for first sign of life from AP */
+						while (time_before(jiffies, timeout)) {
+							if (cpumask_test_cpu(cpu, cpu_initialized_mask)) { 
+
+				while (!cpu_online(cpu)) {
+					cpu_relax();
+
+			bringup_wait_for_ap(cpu)	wait_for_completion(done); /* WAIT HERE */
+					
+CONTEXT CPUn
+~~~~~~~~~~~~
+	start_secondary === rtos_start_secondary
+		lapic_online
+		set_cpu_online(smp_processor_id(), true);
+		irq_affinity_online_cpu
+
+		cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
+			complete_ap_thread(st, true);    /* SIGNAL HERE */
+			cpuhp_online_idle
+				do_idle
+	}
+
+

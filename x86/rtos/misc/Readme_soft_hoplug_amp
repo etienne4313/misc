@@ -1,0 +1,93 @@
+X86 CPU:
+
+CONTEXT CPUx
+~~~~~~~~~~~~
+	sysfs offline >>> CPUn
+		int takedown_cpu(unsigned int cpu)
+			stop_machine_cpuslocked(take_cpu_down)
+			__cpu_die /* This actually kills the CPU. */
+					struct smp_ops smp_ops = {
+						.cpu_die        = native_cpu_die,
+
+					void native_cpu_die(unsigned int cpu)
+						if (cpu_wait_death(cpu, 5)) {   /* WAIT HERE */
+
+CONTEXT CPUn
+~~~~~~~~~~~~
+	take_cpu_down
+		__cpu_disable
+			lapic_offline
+			apic_soft_disable
+		irq_migrate_all_off_this_cpu
+	static void do_idle(void)
+		if (cpu_is_offline(cpu)) {
+			cpuhp_report_idle_dead();
+			arch_cpu_idle_dead();
+				play_dead
+					struct smp_ops smp_ops = {
+						.play_dead      = native_play_dead,
+
+					native_play_dead,
+
+						play_dead_common
+							cpu_report_death			/* SIGNAL HERE */
+
+						>>> HIGHJACK HERE
+						+#ifdef CONFIG_RTOS_X86
+						+	if(rtos_entry)
+						+		rtos_entry(); ==> main() // NEVER return here
+						+#endif
+
+						mwait_play_dead mwait_ptr = &current_thread_info()->flags; __monitor(mwait_ptr, 0, 0);
+						hlt_play_dead
+
+
+CONTEXT CPUx
+~~~~~~~~~~~~
+	sysfs online >>> CPUn
+		int bringup_cpu(unsigned int cpu)
+			ret = __cpu_up(cpu, idle);
+				struct smp_ops smp_ops = {
+					.cpu_up         = native_cpu_up,
+
+				native_cpu_up
+					err = do_boot_cpu(apicid, cpu, tidle, &cpu0_nmi_registered)
+
+						unsigned long start_ip = real_mode_header->trampoline_start;
+							ENTRY(trampoline_start) in arch/x86/realmode/rm/trampoline_64.S
+							The trampoline code will 'jmpq    *tr_start(%rip)' which is set to secondary_startup_64() in arch/x86/kernel/head_64.S
+							secondary_startup_64() will branch into 'initial_code' using 'movq    initial_code(%rip),%rax'
+
+						initial_code = (unsigned long)start_secondary;
+						
+						>>> HIGHJACK HERE
+						printk("RTOS CPU online signaling \n");
+						rtos_enabled = 1; // RELEASE the RTOS CPU; The RTOS idle loop pick this condition and do rtos_start_secondary()
+						boot_error = 0;
+
+						/* INIT IPI */
+				//		boot_error = apic->wakeup_secondary_cpu(apicid, start_ip);
+						
+						/* * Wait 10s total for first sign of life from AP */
+						while (time_before(jiffies, timeout)) {
+							if (cpumask_test_cpu(cpu, cpu_initialized_mask)) { 
+
+				while (!cpu_online(cpu)) {
+					cpu_relax();
+
+			bringup_wait_for_ap(cpu)	wait_for_completion(done); /* WAIT HERE */
+					
+CONTEXT CPUn
+~~~~~~~~~~~~
+	start_secondary === rtos_start_secondary
+		lapic_online
+		set_cpu_online(smp_processor_id(), true);
+		irq_affinity_online_cpu
+
+		cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
+			complete_ap_thread(st, true);    /* SIGNAL HERE */
+			cpuhp_online_idle
+				do_idle
+	}
+
+

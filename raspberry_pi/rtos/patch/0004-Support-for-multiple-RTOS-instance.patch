@@ -1,0 +1,67 @@
+From 800d407f1ffa72f64c962e326c7b83bd63ad2729 Mon Sep 17 00:00:00 2001
+From: etmartin <etmartin@cisco.com>
+Date: Wed, 22 Jun 2022 10:37:20 -0400
+Subject: [PATCH 4/4] Support for multiple RTOS instance
+
+---
+ arch/arm/mach-bcm/platsmp.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/arch/arm/mach-bcm/platsmp.c b/arch/arm/mach-bcm/platsmp.c
+index 97f9da0c687b..23bed9961f1f 100644
+--- a/arch/arm/mach-bcm/platsmp.c
++++ b/arch/arm/mach-bcm/platsmp.c
+@@ -343,29 +343,29 @@ CPU_METHOD_OF_DECLARE(bcm_smp_bcm2836, "brcm,bcm2836-smp", &bcm2836_smp_ops);
+ #endif
+ 
+ #ifdef CONFIG_RTOS_ARM
+-volatile int rtos_enabled = -1;
++volatile int rtos_enabled[CONFIG_NR_CPUS] = { [0 ... (CONFIG_NR_CPUS -1)] = -1 };
+ EXPORT_SYMBOL(rtos_enabled);
+ 
+-void (*rtos_entry)(void) = NULL;
++void (*rtos_entry[CONFIG_NR_CPUS])(void) = { [0 ... (CONFIG_NR_CPUS -1)] = NULL };
+ EXPORT_SYMBOL(rtos_entry);
+ 
+ void rtos_start_secondary(void)
+ {
+-	printk("CPU RTOS no die\n");
++	printk("CPU %d RTOS terminated\n", smp_processor_id());
+ 	secondary_start_kernel();
+ }
+ EXPORT_SYMBOL(rtos_start_secondary);
+ 
+ static void dummy_cpu_die(unsigned int cpu)
+ {
+-	if(rtos_entry)
+-		rtos_entry(); /* Never return */
++	if(rtos_entry[cpu])
++		rtos_entry[cpu](); /* Never return */
+ 
+ 	/* In the scenario where RTOS is not present lets fake CPU HP */
+-	rtos_enabled = 0;
++	rtos_enabled[cpu] = 0;
+ 	printk("Fake RTOS enter\n");
+ 	while(1){
+-		if(rtos_enabled){
++		if(rtos_enabled[cpu]){
+ 			printk("Fake RTOS exit %d\n", smp_processor_id());
+ 			secondary_start_kernel();
+ 		}
+@@ -379,10 +379,10 @@ static int dummy_cpu_kill(unsigned cpu)
+ 
+ static int dummy_boot_secondary(unsigned int cpu, struct task_struct *idle)
+ {
+-	if(rtos_enabled < 0)
++	if(rtos_enabled[cpu] < 0)
+ 		return bcm2836_boot_secondary(cpu, idle);
+-	printk("RTOS CPU online signaling \n");
+-	rtos_enabled = 1;
++	printk("CPU %d RTOS online signaling\n", cpu);
++	rtos_enabled[cpu] = 1;
+ 	return 0;
+ }
+ 
+-- 
+2.34.1
+

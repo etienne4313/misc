@@ -1,0 +1,43 @@
+From 2d0b6ea29837cfc589b2c69a38aa58947faa521e Mon Sep 17 00:00:00 2001
+From: etmartin <etmartin@cisco.com>
+Date: Thu, 2 Jun 2022 12:08:47 -0400
+Subject: [PATCH 3/4] GPIO support for KLM for pinctrl-bcm2835.c
+
+---
+ drivers/pinctrl/bcm/pinctrl-bcm2835.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/pinctrl/bcm/pinctrl-bcm2835.c b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
+index 43e3127e25cd..09e28c8ca856 100644
+--- a/drivers/pinctrl/bcm/pinctrl-bcm2835.c
++++ b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
+@@ -35,6 +35,15 @@
+ #include <linux/types.h>
+ #include <dt-bindings/pinctrl/bcm2835.h>
+ 
++#ifndef CONFIG_RTOS_ARM
++#define CONFIG_RTOS_ARM
++#endif
++
++#ifdef CONFIG_RTOS_ARM
++void __iomem *pc_global = NULL;
++EXPORT_SYMBOL_GPL(pc_global);
++#endif
++
+ #define MODULE_NAME "pinctrl-bcm2835"
+ #define BCM2835_NUM_GPIOS 54
+ #define BCM2835_NUM_BANKS 2
+@@ -1114,6 +1123,10 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
+ 	pc->gpio_chip = bcm2835_gpio_chip;
+ 	pc->gpio_chip.parent = dev;
+ 	pc->gpio_chip.of_node = np;
++#ifdef CONFIG_RTOS_ARM
++	pc_global = pc->base;
++	dev_info(dev, "GPIO support enabled %lx\n", (unsigned long)pc_global);
++#endif
+ 
+ 	for (i = 0; i < BCM2835_NUM_BANKS; i++) {
+ 		unsigned long events;
+-- 
+2.34.1
+

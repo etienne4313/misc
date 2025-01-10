@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# 
+# RUN ON THE PI
+# sudo raspi-config
+#
+cd /home/pi/new
+sudo cp /boot/firmware/kernel7.img /boot/firmware/kernel7.img_old
+sudo cp /boot/firmware/initramfs7 /boot/firmware/initramfs7_old
+sudo rsync -av ./lib/modules/ /lib/modules/
+
+#
+# Copy kernel info so that we can build the initrd
+#
+cd boot
+sudo cp  *6.6* /boot/
+sudo update-initramfs -k 6.6.69-v7+ -c
+sudo cp /boot/initrd.img-6.6.69-v7+ //boot/firmware/initramfs7
+
+sync
+sudo reboot
+
