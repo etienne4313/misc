@@ -1,0 +1,13 @@
+[user]
+	email = etmartin4313@gmail.com
+	name = Etienne Martineau
+[sendemail]
+	smtpServer = smtp.gmail.com
+	smtpServerPort = 587
+	smtpEncryption = tls
+	smtpUser = etmartin4313@gmail.com
+
+[credential]
+	helper = store
+[core]
+	editor = vim

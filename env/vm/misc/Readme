@@ -1,0 +1,11 @@
+telnet localhost 50000
+
+telnet localhost 4444
+quit
+
+#
+# GDB
+#
+gdb vmlinux
+target remote:1234
+

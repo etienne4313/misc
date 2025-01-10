@@ -1,0 +1,168 @@
+#
+# The automated UT test suite depends on the run-time configuration.
+# On the hostOS, pci_proxy is in stub mode and qemu depends on it.
+# The VM is started with NianticVF pass-through on the command line together with -hwid support
+#
+# For non-hotplug TC, let's use NianticVF ( 28:0.0 ) and VirtualDevice ( c1:0.0 )
+# For hotplug TC, let's use HostOS Virtualdevice0 "|3420:0.0" Virtualdevice1 "|3421:0.0" ...
+#
+
+#
+# This is specific to Local lab environment on HOST
+#
+rmmod kvm_intel
+rmmod kvm
+modprobe kvm allow_unsafe_assigned_interrupts=1
+modprobe kvm_intel
+
+rmmod ixgbe
+rmmod uio_pci_proxy
+rmmod uio_dma_proxy
+modprobe uio_dma_proxy debug=1 dmainfo="test=1M,0M test1=1M,1M test2=1M,2M"
+modprobe uio_pci_proxy stub=1 debug=1
+modprobe ixgbe max_vfs=12
+# check that ixgbevf is not HERE
+rmmod ixgbevf
+cat /proc/modules
+
+echo 8086 10fb > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 8086 10ed > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 2345 > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 2346 > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 2347 > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 2348 > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 2349 > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 234a > /sys/bus/pci/drivers/pci_proxy/new_id
+echo 1137 234b > /sys/bus/pci/drivers/pci_proxy/new_id
+lsuio
+
+#
+# Spawn a VM to run User mode driver automated regression
+# NOTE that here we are enabling hwid and Niantic VF in static pass-through
+#
+# DEBUG:
+#  qemu -s -S
+#  GDB
+#  etmartin@Desktop:/nobackup/precise$ gdb ./chroot/tmp/vmlinux 
+#  (gdb) set arch i386:x86-64
+#  (gdb) target remote:1234
+#  (gdb) c
+#  thread apply all bt
+#  info threads
+#
+# SDK:
+#  /usr/bin/qemu-system-x86_64  -kernel /boot/bzImage -initrd /boot/initrd.img
+#
+# VIRSH:
+#  virsh qemu-monitor-command sysadmin --hmp 'info mtree'
+#
+# DEBUG:
+#  -monitor telnet:127.0.0.1:4444,server,nowait
+#
+#  telnet 127.0.0.1 4444
+#  x/100c __log_buf address
+# 
+# X2APIC
+#  -cpu SandyBridge
+#
+# VIRTIO disk:
+#  drive_add 0 file=/image,id=drive-virtio-disk1,if=none
+#  device_add virtio-blk-pci,id=lv0_disk1,drive=drive-virtio-disk1,bus=pci.2,addr=2
+#  device_del lv0_disk1
+#
+# VDEVIDE MSIX:
+#  kernel patch: support for niantic downstream port hotplug
+#   - Niantic in PF mode PT with hotplug
+#   - Qemu in x2apic mode
+#   -smp 4 -cpu host,+x2apic
+#
+#   vdevice_t41 -p "|3420:0.0" -n 10 &
+#   hwid_hp_aer_msi_multicast_generic -p "|340e:7.0" -v 0x1234 -i 90 -r 0xfee00000
+#   generic_irq_multicast 90 &
+#   generic_irq_multicast 90 &
+#   generic_irq_multicast 90 &
+#
+#   niantic_pkt_inject &
+#   kill `pidof hwid_hp_aer_msi_multicast_generic`
+# 
+#   On hostOS Repro on hostOS the MSI capability to ENABLE
+#   This is because this is not a true sudo msi device
+# 
+#   setpci -s28:0.0 52.b=81
+#
+# VIRTIO CONSOLE
+#  -device virtio-serial -device virtconsole,chardev=vserial0 -chardev socket,id=vserial0,host=127.0.0.1,port=50000,telnet,server,nowait
+#  OR to TTYS0 directly
+#  -device virtio-serial -device virtconsole,chardev=vserial0 -chardev tty,id=vserial0,path=/dev/ttyS0
+#  CMD line:
+#   console=hvc0 
+#    OR 
+#   getty hvc0 &
+#
+# SERIAL OVER TELNET:
+# -device isa-serial,chardev=vserial0,id=vserial0 -chardev socket,id=vserial0,host=127.0.0.1,port=50000,telnet,server,nowait
+#
+# KALSR
+# kaslr on command line
+# TTYS0 and TTYS1 
+-device isa-serial,chardev=vserial0,id=vserial0 -chardev socket,id=vserial0,host=127.0.0.1,port=50000,telnet,server,nowait -device isa-serial,chardev=vserial1,id=vserial1 -chardev socket,id=vserial1,host=127.0.0.1,port=50001,telnet,server,nowait 
+
+#
+# USB:
+#  -drive if=none,id=usbstick,file=/path/to/image   
+#  -usb                                             
+#  -device usb-ehci,id=ehci                         
+#  -device usb-tablet,bus=usb-bus.0                 
+#  -device usb-storage,bus=ehci.0,drive=usbstick
+#
+# HYPER THREADING
+#  -smp 8,cores=4,threads=2,sockets=1
+#
+# NOTE:
+# vmtype=hostos is needed for the UT regression _but_ it breaks the virtio disk
+# boardtype=LC boardtype=RP
+
+# 
+# KPATCH testing
+#
+/usr/local/bin/qemu-system-x86_64 -M q35 -readconfig /usr/share/qemu-153/q35-chipset.cfg -device virtio-blk-pci,drive=disk1,bootindex=1,bus=pci.2,addr=1 -drive file=/image,if=none,cache=off,id=disk1 -kernel /boot/vmlinuz-3.10.19_FCS -initrd /boot/initrd.img-3.10.19_FCS -nographic -append "console=ttyS0 115200,8n1 root=/dev/vda single bigphysarea=10M assign-busses pci=hpmemsize=0M,hpiosize=0M" -enable-kvm -m 2500 -smp 4 -monitor telnet:127.0.0.1:4444,server,nowait
+
+# 
+# LAB PC
+#
+/usr/local/bin/qemu-system-x86_64 -M q35 -readconfig /usr/share/qemu-153/q35-chipset.cfg -device virtio-blk-pci,drive=disk1,bootindex=1,bus=pci.2,addr=1 -drive file=/image,if=none,cache=off,id=disk1 -kernel /boot/vmlinuz-3.10.19 -initrd /boot/initrd.img-3.10.19 -nographic -append "console=ttyS0 115200,8n1 root=/dev/vda single bigphysarea=10M assign-busses pci=hpmemsize=0M,hpiosize=0M" -enable-kvm -device hwid,debug=1  -m 2500 -smp 4 -monitor telnet:127.0.0.1:4444,server,nowait -name test -device pci-assign,host=28:10.0
+
+#
+# SERVER PC
+#
+/usr/local/bin/qemu-system-x86_64 -M q35 -readconfig /usr/share/qemu-153/q35-chipset.cfg -device virtio-blk-pci,drive=disk1,bootindex=1,bus=pci.2,addr=1 -drive file=/image,if=none,cache=off,id=disk1 -kernel /boot/vmlinuz-3.10.19 -initrd /boot/initrd.img-3.10.19 -nographic -append "console=ttyS0 115200,8n1 root=/dev/vda single bigphysarea=10M assign-busses pci=hpmemsize=0M,hpiosize=0M" -enable-kvm -m 2500 -smp 4 -monitor telnet:127.0.0.1:4444,server,nowait
+
+#
+# SERVER PC eXR kernel
+#
+/usr/local/bin/qemu-system-x86_64 -M q35 -readconfig /usr/share/qemu-153/q35-chipset.cfg -device virtio-blk-pci,drive=disk1,bootindex=1,bus=pci.2,addr=1 -drive file=/image,if=none,cache=off,id=disk1 -kernel /boot/vmlinuz-3.14.23 -initrd /boot/initrd.img-3.14.23 -nographic -append "console=ttyS0 115200,8n1 root=/dev/vda single bigphysarea=10M assign-busses pci=hpmemsize=0M,hpiosize=0M" -enable-kvm -m 2500 -smp 4 -monitor telnet:127.0.0.1:4444,server,nowait
+
+#
+# CLONE with IRQ on LAB
+# IN VM:
+#   rm -rf  /lib/modules/3.10.19/kernel/drivers/net/ethernet/intel/ixgb*
+#   vdevice_t41 -p "|3420:0.0" -n 10 &
+#   hwid_hp_aer_msi_multicast_generic -p "|340e:7.0+1" -v 0x1234 -i 90
+#   generic_irq_multicast 90 &
+#   generic_irq_multicast 90 &
+#   generic_irq_multicast 90 &
+#
+#   niantic_pkt_inject &
+#   kill `pidof hwid_hp_aer_msi_multicast_generic`
+# 
+#   On hostOS Repro on hostOS the MSI capability to ENABLE
+#   This is because this is not a true sudo msi device
+# 
+#   setpci -s28:0.0 52.b=81
+#
+/usr/local/bin/qemu-system-x86_64 -M q35 -readconfig /usr/share/qemu-153/q35-chipset.cfg -device virtio-blk-pci,drive=disk1,bootindex=1,bus=pci.2,addr=1 -drive file=/image,if=none,cache=off,id=disk1 -kernel /boot/vmlinuz-3.10.19 -initrd /boot/initrd.img-3.10.19 -nographic -append "console=ttyS0 115200,8n1 root=/dev/vda single bigphysarea=10M assign-busses pci=hpmemsize=0M,hpiosize=0M" -enable-kvm -device hwid,debug=1  -m 2500 -smp 4 -cpu host,+x2apic -monitor telnet:127.0.0.1:4444,server,nowait -name test
+
+#
+# dyn debug: dynamic_debug.verbose=1  SHOW all debug module 
+# dyndbg=\"module smpboot +p\" for SMP boot
+

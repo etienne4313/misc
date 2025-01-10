@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# 3.14 upstream
+#KERNEL=vmlinuz-3.14.79
+
+# 3.14 eXR ;; Doesn't boot??
+#KERNEL=vmlinuz-3.14.23
+
+# 5.4 upstream
+#KERNEL=vmlinuz-5.4.142
+
+# 4.8 kernel
+KERNEL=vmlinuz-4.8.17
+
+qemu-system-x86_64 -s -kernel ./initrd/boot/$KERNEL -initrd ./initrd/boot/ramdisk.gz -nographic -append "console=ttyS0 root=/dev/ram single" -enable-kvm -m 2500 -smp 8 -monitor telnet:127.0.0.1:4444,server,nowait -device virtio-serial -device virtconsole,chardev=vserial0 -chardev socket,id=vserial0,host=127.0.0.1,port=50000,telnet,server,nowait -device virtio-serial -device virtconsole,chardev=vserial1 -chardev socket,id=vserial1,host=127.0.0.1,port=50001,telnet,server,nowait
+

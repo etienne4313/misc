@@ -1,0 +1,10 @@
+#!/bin/sh
+cd initrd
+rm -f ./boot/initrd.img*
+rm -f ./boot/ramdisk*
+rm -f ./boot/*old*
+tmpfile=$(mktemp)
+find . -print | grep -v .git |cpio -H newc -o |gzip > $tmpfile
+mv $tmpfile ./boot/ramdisk.gz
+cd ..
+

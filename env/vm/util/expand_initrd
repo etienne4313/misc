@@ -1,0 +1,4 @@
+#!/bin/sh
+zcat -9 $1 | cpio -idmv
+
+# Ubuntu initrd; unmkinitramfs ../initrd.img-5.4.0-109-generic  ./

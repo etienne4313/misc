@@ -1,0 +1,2 @@
+#!/bin/sh
+kill `pidof qemu-system-x86_64`

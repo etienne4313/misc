@@ -1,0 +1,19 @@
+OE ISO
+Get the ISO
+/nobackup/sim/util/extract_iso.sh 8000-x64.iso.EFR-00000434000 ./
+
+ls boot/initrd.img
+ls boot/bzImage
+
+# maybe needed to get the KO
+#expand the squash fs
+#	sudo unsquashfs -d ./t/ packages.squashfs
+#expand the RPM
+#	for each in *; do rpm2cpio $each | cpio -idmv; done
+
+# 
+#
+mkdir newroot
+mount /dev/sda2 newroot/
+exec switch_root /newroot /sbin/init
+

@@ -1,0 +1,7 @@
+#!/bin/sh
+rm -rf initrd/boot/vmlinuz*
+rm -rf initrd/boot/System*
+rm -rf initrd/boot/config*
+rm -rf initrd/boot/ramdisk*
+
+rm -rf initrd/lib/modules/*

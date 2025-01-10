@@ -1,0 +1,10 @@
+#!/bin/sh
+
+#
+# MOUNT from hostOS:
+#
+# Grub is on sda1 primary is on sda2
+# Without EFI, sector 4096 and sector size is 512 ==> 2097152
+#
+sudo mount -o offset=2097152 disk.img mnt
+
