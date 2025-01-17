@@ -1,0 +1,4 @@
+#!/bin/sh
+#find . -print |cpio -H newc -R root:root -o |gzip >$1
+find . -print |cpio -H newc -R root:root -o | zstd -z > $1
+

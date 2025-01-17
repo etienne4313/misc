@@ -1,3 +1,0 @@
-#!/bin/sh
-find . -print |cpio -H newc -R root:root -o |gzip >$1
-

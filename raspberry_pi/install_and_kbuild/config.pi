@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# 
+# https://www.raspberrypi.com/documentation/computers/linux_kernel.html
+#
+# 32 bit
+# 
+# sudo apt install bc bison flex libssl-dev make libc6-dev libncurses5-dev
+# sudo apt install crossbuild-essential-armhf
+# git clone --depth=1 https://github.com/raspberrypi/linux linux_pi
+#
+
+KERNEL=kernel7
+
+# Raspberry Pi 3:
+#make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2709_defconfig
+
+#Raspberry Pi 3 model b
+#make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2835_defconfig
+
+#From running pi
+#cp /tmp/config-6.6.51+rpt-rpi-v7 .config
+
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-  oldconfig
+cp .config CONFIG
+

@@ -1,0 +1,11 @@
+# Download image
+https://downloads.raspberrypi.org/raspios_lite_armhf/images/
+
+# umount the sd card
+# May need to fdisk initially
+
+# Bake
+xzcat /nobackup/image/2024-11-19-raspios-bookworm-armhf-lite.img.xz | sudo dd of=/dev/sdb bs=64k oflag=dsync status=progress
+
+# pi@raspberrypi:~ $ s raspi-config
+

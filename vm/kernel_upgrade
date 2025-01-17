@@ -1,0 +1,36 @@
+./mount_disk
+
+KERNEL=*5.4.223*
+
+sudo mkdir mnt/lib/modules/6.13.0-rc1
+sudo rsync -av /lib/modules/6.13.0-rc1/ mnt/lib/modules/6.13.0-rc1/
+sudo cp /boot/*6.13* ./mnt/boot/
+# sudo update-initramfs -k 6.13.0-rc1 -c
+
+sudo mkdir mnt/lib/modules/5.4.223
+sudo rsync -av /lib/modules/5.4.223/ mnt/lib/modules/5.4.223/
+sudo cp /boot/*5.4.223* ./mnt/boot/
+# sudo update-initramfs -k 5.4.223 -c
+
+sudo update-grub
+
+
+
+grep gnulinux /boot/grub/grub.cfg
+	menuentry 'Ubuntu, with Linux 6.6.28' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-6.6.28-advanced-79670a9c-4d61-4922-960e-c42d830cd39d' {
+	menuentry 'Ubuntu, with Linux 6.6.28 (recovery mode)' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-6.6.28-recovery-79670a9c-4d61-4922-960e-c
+	menuentry 'Ubuntu, with Linux 6.6.28.old' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-6.6.28.old-advanced-79670a9c-4d61-4922-960e-c42d830cd
+	menuentry 'Ubuntu, with Linux 6.6.28.old (recovery mode)' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-6.6.28.old-recovery-79670a9c-4d61-492
+	menuentry 'Ubuntu, with Linux 5.4.223' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-5.4.223-advanced-79670a9c-4d61-4922-960e-c42d830cd39d' {
+	menuentry 'Ubuntu, with Linux 5.4.223 (recovery mode)' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-5.4.223-recovery-79670a9c-4d61-4922-960e
+	menuentry 'Ubuntu, with Linux 5.4.223.old' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-5.4.223.old-advanced-79670a9c-4d61-4922-960e-c42d830
+	menuentry 'Ubuntu, with Linux 5.4.223.old (recovery mode)' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-5.4.223.old-recovery-79670a9c-4d61-4
+	menuentry 'Ubuntu, with Linux 5.4.0-204-generic' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-5.4.0-204-generic-advanced-79670a9c-4d61-4922-
+	menuentry 'Ubuntu, with Linux 5.4.0-204-generic (recovery mode)' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-5.4.0-204-generic-recovery-796
+
+vi /etc/default/grub
+GRUB_DEFAULT=5
+
+sudo update-grub
+
+

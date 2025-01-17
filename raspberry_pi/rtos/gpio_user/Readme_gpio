@@ -30,3 +30,38 @@ crw-rw---- 1 root gpio 254, 0 Feb  9 09:03 /dev/gpiochip0
 0x 7E20 001C GPSET0 GPIO Pin Output Set 0 32 W
 0x 7E20 0020 GPSET1 GPIO Pin Output Set 1 32 W
 
+root@raspberrypi:/sys/class/gpio# ls
+export	gpio550  gpiochip512  gpiochip566  unexport
+root@raspberrypi:/sys/class/gpio# echo 551 >export
+root@raspberrypi:/sys/class/gpio# ls
+export	gpio550  gpio551  gpiochip512  gpiochip566  unexport
+root@raspberrypi:/sys/class/gpio# cd gpio551/
+root@raspberrypi:/sys/class/gpio/gpio551# ls
+active_low  device  direction  edge  power  subsystem  uevent  value
+root@raspberrypi:/sys/class/gpio/gpio551#
+
+
+root@raspberrypi:/sys/class/gpio/gpio550# echo rising > edge
+
+200:          1          0          0          0  pinctrl-bcm2835  38 Edge      gpiolib
+
+
+~                   |202     ret = request_any_context_irq(data->irq, gpio_sysfs_irq, irq_flags,
+~                   |203                 "gpiolib", data);
+
+~                   |156
+~                   |157 static irqreturn_t gpio_sysfs_irq(int irq, void *priv)
+~                   |158 {
+~                   |159     struct gpiod_data *data = priv;
+~                   |160
+~                   |161     sysfs_notify_dirent(data->value_kn);
+~                   |162
+~                   |163     return IRQ_HANDLED;
+
+drivers/gpio/gpiolib-sysfs.c
+
+EXAMPLE:
+drivers/gpu/drm/bridge/ti-tpd12s015.c
+
+
+

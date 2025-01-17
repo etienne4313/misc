@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# 
+# We build an install on the host WS directly to leverage the initrd script
+#
+cp CONFIG .config
+make -j8 bzImage LOCALVERSION=""; make -j8 modules LOCALVERSION=""; sudo make -j8 modules_install; sudo make -j8 install 
+

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cp CONFIG .config
+make -j8 bzImage LOCALVERSION=""; sudo make -j8 install
+
