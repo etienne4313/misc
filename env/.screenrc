@@ -1,0 +1,41 @@
+###############################################################################
+#    Byobu f-key keybindings
+#      This configuration profile is intended to provide a useful
+#      keybindings using the keyboard's f-keys
+#
+#    Copyright (C) 2008  Nick Barcet nick.barcet@canonical.com
+#                        Dustin Kirkland kirkland@canonical.com
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, version 3 of the License.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see http://www.gnu.org/licenses/.
+###############################################################################
+ 
+
+# F-keys seem to work well in both gnome-terminal and tty consoles
+                                                        # F1  | 'help' in gnome-terminal
+bindkey "^[[1;5A" screen                                        # F2  | Create new window
+bindkey "^[[1;5C" next                                  # F3  | Previous Window
+bindkey "^[[1;5D" prev                                  # F4  | Next Window
+bindkey "^[[1;5B" kill
+ 
+#below is a translation from Arrow-right to Ctrl-W W
+bindkey -t "^[[1;2D" stuff "\027127"
+bindkey -t "^[[1;2C" stuff "\027167"
+ 
+shelltitle "$ |bash"
+
+# THIS IS THE PRETTY BIT
+#change the hardstatus settings to give an window list at the bottom of the
+##screen, with the time and date and with the current window highlighted
+hardstatus             alwayslastline                                                                                                                      
+#hardstatus string '%{= mK}%-Lw%{= KW}%50>%n%f* %t%{= mK}%+Lw%< %{= kG}%-=%D %d %M %Y %c:%s%{-}'
+hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'
