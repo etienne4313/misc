@@ -6,7 +6,7 @@ fi
 /usr/bin/qemu-system-x86_64 \
   -machine q35 \
   -boot d \
-  -cdrom /nobackup/bin/ubuntu-20.04.4-live-server-amd64.iso \
+  -cdrom $1 \
   -drive file=disk.img,format=raw \
   -m 4G \
   -enable-kvm \
