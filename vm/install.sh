@@ -8,6 +8,7 @@ fi
   -boot d \
   -cdrom $1 \
   -drive file=disk.img,format=raw \
+  -serial telnet:127.0.0.1:50000,server,nowait \
   -m 4G \
   -enable-kvm \
   -smp 2 \
