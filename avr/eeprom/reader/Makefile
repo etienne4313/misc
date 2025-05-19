@@ -1,6 +1,5 @@
 CFLAGS = -Wall -c
 LDFLAGS = -lrt
-INSTALL = /nobackup/lucid/chroot/root/prog/
 
 CFLAGS += $(EXTRA_CFLAGS)
 LDFLAGS += $(EXTRA_LDFLAGS)
@@ -15,9 +14,6 @@ objects := $(patsubst %.c,%.o,$(wildcard *.c))
 
 all: $(objects)
 	gcc -o $(PROG) $(objects) $(LDFLAGS)
-
-install: $(PROG)
-	cp $(PROG) $(INSTALL)
 
 clean:
 	rm -f $(objects) $(PROG)

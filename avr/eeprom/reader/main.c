@@ -8,10 +8,10 @@ int lookup[] ={15,93,223,143,159,207,79,31,191,239,111,63,47,127,255,175};
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 /*
- * etmartin@Desktop:/nobackup/meta/doc/linux/notes/arduino/e2pgm/reader$ ./reader 108100 dd
+ * ./reader 108100 dd
  * PROG 1a6 [68] X = 11
  * ==> 1a6c
- * etmartin@Desktop:/nobackup/meta/doc/linux/notes/arduino/e2pgm/reader$ ./reader 1a6c
+ * ./reader 1a6c
  * Value = 0x1a6c
  * output = 108079
  * CHK = e593
