@@ -28,14 +28,14 @@ void setup(void) {
     Serial.println("I2C EEPROM not identified ... check your connections?\r\n");
     //while (1) delay(10);
   }
-  
+  max_addr= 4096;
   Serial.print("This EEPROM can store ");
   Serial.print(max_addr);
   Serial.println(" bytes");
 
 #if 1
+  max_addr= 2048;
   x=0;
-  max_addr= 2048;  
   for (uint16_t addr = 0; addr < max_addr; addr++) {
     val = pgm_read_word_near(&(full_src[x]));
     i2ceeprom.write(addr, (val >> 8) & 0xff);
@@ -48,9 +48,8 @@ void setup(void) {
 
     
 #if 1
-  max_addr=4096; 
 // dump the memory in HEX
-  
+  max_addr= 4096;
   x=0;
   for (uint16_t addr = 0; addr < max_addr; addr++) {
 
